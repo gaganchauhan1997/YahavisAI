@@ -1,106 +1,55 @@
-"""
-YahavisAI Backend Configuration
-Production-ready settings with environment variable support
-"""
+from functools import lru_cache
+from typing import Optional
 
-from pydantic_settings import BaseSettings
-from typing import List, Optional
-import os
+from pydantic import field_validator
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    """Application settings loaded from environment variables"""
-    
-    # Application
+    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
+
     APP_NAME: str = "YahavisAI"
-    APP_VERSION: str = "1.0.0"
+    APP_VERSION: str = "0.1.0"
+    ENVIRONMENT: str = "production"
     DEBUG: bool = False
-    ENVIRONMENT: str = "production"  # development, staging, production
-    
-    # Server
     HOST: str = "0.0.0.0"
     PORT: int = 8000
-    WORKERS: int = 4
-    
-    # Security
-    SECRET_KEY: str
-    JWT_ALGORITHM: str = "HS256"
-    JWT_ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
-    JWT_REFRESH_TOKEN_EXPIRE_DAYS: int = 7
-    
-    # CORS
-    CORS_ORIGINS: List[str] = [
-        "http://localhost:3000",
-        "https://jarvisai.app",
-        "https://*.jarvisai.app"
-    ]
-    
-    # Database - Supabase
-    SUPABASE_URL: str
-    SUPABASE_KEY: str
-    SUPABASE_JWT_SECRET: Optional[str] = None
-    
-    # Redis (for task queue and caching)
-    REDIS_URL: str = "redis://localhost:6379/0"
-    REDIS_PASSWORD: Optional[str] = None
-    
-    # AI APIs
-    GEMINI_API_KEY: str
-    GEMINI_MODEL: str = "gemini-2.5-flash-preview-05-20"
-    GEMINI_TEMPERATURE: float = 0.7
-    GEMINI_MAX_TOKENS: int = 4096
-    
-    # Whisper (Voice)
-    OPENAI_API_KEY: Optional[str] = None  # For Whisper API fallback
-    WHISPER_MODEL_SIZE: str = "base"  # tiny, base, small, medium, large
-    
-    # WebSocket
-    WS_PING_INTERVAL: int = 20
-    WS_PING_TIMEOUT: int = 20
-    WS_MAX_MESSAGE_SIZE: int = 1024 * 1024  # 1MB
-    
-    # Automation
-    N8N_WEBHOOK_URL: Optional[str] = None
-    N8N_API_KEY: Optional[str] = None
-    MAX_AUTOMATION_RETRIES: int = 3
-    AUTOMATION_TIMEOUT_SECONDS: int = 300
-    
-    # Desktop Agent
-    AGENT_HEARTBEAT_INTERVAL: int = 30
-    AGENT_TIMEOUT_SECONDS: int = 60
-    
-    # File Upload
-    MAX_UPLOAD_SIZE: int = 50 * 1024 * 1024  # 50MB
-    UPLOAD_DIR: str = "uploads"
-    
-    # Logging
     LOG_LEVEL: str = "INFO"
-    LOG_FORMAT: str = "json"
-    
-    class Config:
-        env_file = ".env"
-        env_file_encoding = "utf-8"
-        case_sensitive = True
+
+    SESSION_SECRET: Optional[str] = None
+    SECRET_KEY: Optional[str] = None
+    CORS_ORIGINS: list[str] = [
+        "http://localhost:3000",
+        "https://yahavis.hackknow.com",
+    ]
+
+    GEMINI_API_KEY: Optional[str] = None
+    GEMINI_MODEL: str = "gemini-2.5-flash"
+    GEMINI_TEMPERATURE: float = 0.3
+    GEMINI_MAX_TOKENS: int = 2048
+
+    SUPABASE_URL: Optional[str] = None
+    SUPABASE_KEY: Optional[str] = None
+    REDIS_URL: Optional[str] = None
+    N8N_WEBHOOK_URL: Optional[str] = None
+
+    @field_validator("CORS_ORIGINS", mode="before")
+    @classmethod
+    def parse_cors_origins(cls, value):
+        if isinstance(value, str):
+            return [origin.strip() for origin in value.split(",") if origin.strip()]
+        return value
 
 
-# Global settings instance
-settings = Settings()
-
-
+@lru_cache
 def get_settings() -> Settings:
-    """Get application settings"""
-    return settings
+    return Settings()
 
 
-# Environment-specific overrides
-def get_cors_origins() -> List[str]:
-    """Get CORS origins based on environment"""
+settings = get_settings()
+
+
+def get_cors_origins() -> list[str]:
     if settings.ENVIRONMENT == "development":
         return ["*"]
     return settings.CORS_ORIGINS
-
-
-def get_database_url() -> str:
-    """Get PostgreSQL connection URL for SQLAlchemy (if needed alongside Supabase)"""
-    # Extract from Supabase URL if needed
-    return f"{settings.SUPABASE_URL}/rest/v1"

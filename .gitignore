@@ -1,5 +1,8 @@
 # Dependencies
 node_modules/
+frontend/.next/
+frontend/out/
+frontend/tsconfig.tsbuildinfo
 venv/
 env/
 __pycache__/
