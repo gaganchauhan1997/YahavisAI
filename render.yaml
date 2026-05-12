@@ -1,0 +1,25 @@
+services:
+  - type: web
+    name: yahavisai-backend
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_KEY
+        sync: false
+      - key: SECRET_KEY
+        sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: N8N_WEBHOOK_URL
+        sync: false
+      - key: LOG_LEVEL
+        value: info
+      - key: DEBUG
+        value: "false"
