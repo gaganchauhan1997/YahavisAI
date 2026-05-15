@@ -3,12 +3,13 @@ name: Deploy YAHAVIS to Cloudflare Workers
 on:
   push:
     branches: [main]
-  workflow_dispatch:  # Allow manual trigger from GitHub Actions tab
+  workflow_dispatch:   # Manual trigger from Actions tab
 
 jobs:
-  deploy-worker:
+  deploy:
     runs-on: ubuntu-latest
-    name: Deploy to Cloudflare Workers + Pages
+    name: Deploy to Cloudflare Workers
+
     steps:
       - uses: actions/checkout@v4
 
@@ -20,40 +21,66 @@ jobs:
       - name: Install Wrangler
         run: npm install -g wrangler
 
+      # Uses Global API Key (X-Auth-Email / X-Auth-Key) — more reliable than API tokens
       - name: Deploy Worker
         env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_API_KEY:   ${{ secrets.CLOUDFLARE_API_KEY }}
+          CLOUDFLARE_EMAIL:     ${{ secrets.CLOUDFLARE_EMAIL }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: wrangler deploy
 
       - name: Set Worker Secrets
         env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_API_KEY:    ${{ secrets.CLOUDFLARE_API_KEY }}
+          CLOUDFLARE_EMAIL:      ${{ secrets.CLOUDFLARE_EMAIL }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
-          echo "${{ secrets.GROQ_API_KEY_1 }}" | wrangler secret put GROQ_API_KEY_1
-          echo "${{ secrets.GEMINI_API_KEY_1 }}" | wrangler secret put GEMINI_API_KEY_1
+          echo "${{ secrets.GROQ_API_KEY_1 }}"     | wrangler secret put GROQ_API_KEY_1
+          echo "${{ secrets.GEMINI_API_KEY_1 }}"   | wrangler secret put GEMINI_API_KEY_1
           echo "${{ secrets.OPENROUTER_API_KEY }}" | wrangler secret put OPENROUTER_API_KEY
-          echo "${{ secrets.WC_SITE_URL }}" | wrangler secret put WC_SITE_URL
-          echo "${{ secrets.WC_CONSUMER_KEY }}" | wrangler secret put WC_CONSUMER_KEY
-          echo "${{ secrets.WC_CONSUMER_SECRET }}" | wrangler secret put WC_CONSUMER_SECRET
+          echo "${{ secrets.WC_SITE_URL }}"        | wrangler secret put WC_SITE_URL
+          echo "${{ secrets.WC_CONSUMER_KEY }}"    | wrangler secret put WC_CONSUMER_KEY     2>/dev/null || true
+          echo "${{ secrets.WC_CONSUMER_SECRET }}" | wrangler secret put WC_CONSUMER_SECRET  2>/dev/null || true
 
       - name: Upload Static Files to KV
         env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_API_KEY:    ${{ secrets.CLOUDFLARE_API_KEY }}
+          CLOUDFLARE_EMAIL:      ${{ secrets.CLOUDFLARE_EMAIL }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
-          # Create KV namespaces if they don't exist
-          wrangler kv namespace create STATIC_KV --preview false 2>/dev/null || true
-          wrangler kv namespace create RATE_KV   --preview false 2>/dev/null || true
+          pip install requests -q
+          python3 << 'PYEOF'
+          import requests, os, sys
 
-          # Upload static files
-          wrangler kv key put --namespace-id="$(wrangler kv namespace list | python3 -c "import sys,json; [print(n['id']) for n in json.load(sys.stdin) if n['title']=='yahavis-STATIC_KV']" | head -1)" \
-            "index.html" --path ui/index.html || true
-          wrangler kv key put --namespace-id="$(wrangler kv namespace list | python3 -c "import sys,json; [print(n['id']) for n in json.load(sys.stdin) if n['title']=='yahavis-STATIC_KV']" | head -1)" \
-            "style.css"  --path ui/style.css  || true
-          wrangler kv key put --namespace-id="$(wrangler kv namespace list | python3 -c "import sys,json; [print(n['id']) for n in json.load(sys.stdin) if n['title']=='yahavis-STATIC_KV']" | head -1)" \
-            "app.js"     --path ui/app.js     || true
+          AUTH = {
+            "X-Auth-Email": os.environ["CLOUDFLARE_EMAIL"],
+            "X-Auth-Key":   os.environ["CLOUDFLARE_API_KEY"],
+          }
+          ACCT = os.environ["CLOUDFLARE_ACCOUNT_ID"]
+          BASE = "https://api.cloudflare.com/client/v4"
+
+          def get_kv_id(title):
+            r = requests.get(f"{BASE}/accounts/{ACCT}/storage/kv/namespaces", headers=AUTH)
+            for ns in r.json().get("result", []):
+              if ns["title"] == title:
+                return ns["id"]
+            r2 = requests.post(f"{BASE}/accounts/{ACCT}/storage/kv/namespaces",
+                               headers={**AUTH,"Content-Type":"application/json"},
+                               json={"title": title})
+            return r2.json().get("result", {}).get("id")
+
+          sid = get_kv_id("yahavis-STATIC_KV")
+          for fname in ["index.html","style.css","app.js"]:
+            p = f"ui/{fname}"
+            if not os.path.exists(p): continue
+            with open(p,"rb") as f: data = f.read()
+            r = requests.put(f"{BASE}/accounts/{ACCT}/storage/kv/namespaces/{sid}/values/{fname}",
+                             headers=AUTH, data=data)
+            print(f"  {'✓' if r.json().get('success') else '✗'} {fname}")
+          PYEOF
 
       - name: Done
-        run: echo "✅ YAHAVIS deployed to yahavis.hackknow.com"
+        run: |
+          echo "✅ YAHAVIS deployed!"
+          echo "   → https://yahavis.hackknow.com"
+          echo "   → https://yahavis.workers.dev"
