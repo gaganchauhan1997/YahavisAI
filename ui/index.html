@@ -2,146 +2,86 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>YAHAVIS — Yahavi AI System</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>YAHAVIS</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<!-- Boot Sequence -->
+<!-- Boot -->
 <div id="boot">
-  <div id="boot-ring"></div>
+  <div id="boot-ring-outer"></div>
+  <div id="boot-ring-inner"></div>
   <div id="boot-logo">YAHAVIS</div>
-  <div id="boot-sub">YAHAVI AI SYSTEM · v2.0 · HACKKNOW</div>
+  <div id="boot-tagline">YAHAVI AI SYSTEM · v2.0</div>
   <div id="boot-bar-wrap"><div id="boot-bar"></div></div>
-  <div id="boot-msg">Initializing core systems...</div>
+  <div id="boot-msg">Initializing...</div>
 </div>
 
-<!-- HUD -->
-<div id="hud" class="hidden">
+<!-- APP -->
+<div id="app" style="display:none">
 
-  <!-- Top bar -->
-  <div id="topbar">
-    <div id="top-left">
-      <span id="logo-text">Y<em>A</em>HAVIS</span>
-      <span class="badge">v2.0</span>
-      <span class="badge online" id="status-badge">● ONLINE</span>
-    </div>
-    <div id="top-center">
-      <span id="mode-label">SERVER MODE</span>
-    </div>
-    <div id="top-right">
-      <span id="clock"></span>
-      <span id="date-display"></span>
-    </div>
+  <!-- Header -->
+  <div id="header">
+    <span id="logo">Y<b>A</b>HAVIS</span>
+    <span id="hdr-status"><span class="dot"></span> ONLINE</span>
+    <span id="hdr-time"></span>
+    <button id="menu-btn" onclick="toggleMenu()">☰</button>
   </div>
 
-  <!-- Main grid -->
-  <div id="main-grid">
+  <!-- Slide-out menu (mobile) -->
+  <div id="side-menu" class="closed">
+    <div class="menu-section">API STATUS</div>
+    <div id="api-slots-menu"></div>
+    <div class="menu-section" style="margin-top:16px">QUICK COMMANDS</div>
+    <button class="qb" data-cmd="aaj ke orders batao">📦 Today's Orders</button>
+    <button class="qb" data-cmd="aaj ka revenue kitna hai">💰 Revenue</button>
+    <button class="qb" data-cmd="shop.hackknow.com ka status check karo">🌐 Site Status</button>
+    <button class="qb" data-cmd="system status batao">💻 System Status</button>
+    <button class="qb" data-cmd="latest AI news kya hai">📡 AI News</button>
+    <button class="qb" data-cmd="kuch motivating bolo Boss mode mein">⚡ Motivate Me</button>
+    <div class="menu-section" style="margin-top:16px">SETTINGS</div>
+    <label class="tog-row"><span>Auto-Speak (TTS)</span><div class="tog active" id="tts-tog" onclick="toggleTTS()"></div></label>
+    <label class="tog-row"><span>Wake Word</span><div class="tog active" id="wake-tog" onclick="toggleWake()"></div></label>
+    <button class="qb" style="margin-top:8px" onclick="setGroqKey()">🔑 Set Groq Key</button>
+    <button class="qb" onclick="clearChat()">🗑 Clear Chat</button>
+    <div id="backend-info" style="margin-top:12px;font-size:10px;color:var(--dim)">Detecting backend...</div>
+  </div>
+  <div id="menu-overlay" onclick="closeMenu()"></div>
 
-    <!-- Left panel -->
-    <div class="panel" id="left-panel">
-      <div class="panel-hdr">◈ AI CORES</div>
-      <div id="api-slots"></div>
-
-      <div class="panel-hdr" style="margin-top:18px">◈ QUICK OPS</div>
-      <div id="quick-btns">
-        <button class="qb" data-cmd="hackknow ke aaj ke orders batao">📦 Orders</button>
-        <button class="qb" data-cmd="aaj ka revenue kitna hai">💰 Revenue</button>
-        <button class="qb" data-cmd="shop.hackknow.com ka status check karo">🌐 Site Status</button>
-        <button class="qb" data-cmd="latest AI news kya hai">📡 AI News</button>
-        <button class="qb" data-cmd="system status batao">💻 System</button>
-        <button class="qb" data-cmd="mujhe motivate karo Boss mode mein">⚡ Motivate</button>
-      </div>
-
-      <div class="panel-hdr" style="margin-top:18px">◈ MEMORY</div>
-      <div id="mem-tags">
-        <span class="mtag">Myth = Boss</span>
-        <span class="mtag">hackknow.com</span>
-        <span class="mtag">IST Timezone</span>
-        <span class="mtag">Hinglish</span>
-      </div>
-    </div>
-
-    <!-- Center panel — HOLOGRAPHIC DISPLAY -->
-    <div id="center-panel">
-      <!-- Arc reactor rings -->
-      <div id="arc-container">
-        <div class="arc-ring" id="ring1"></div>
-        <div class="arc-ring" id="ring2"></div>
-        <div class="arc-ring" id="ring3"></div>
+  <!-- Chat area -->
+  <div id="chat-area">
+    <!-- Arc reactor (top of chat) -->
+    <div id="arc-wrap">
+      <div id="arc">
+        <div class="arc-r r1"></div>
+        <div class="arc-r r2"></div>
+        <div class="arc-r r3"></div>
         <div id="arc-core">
           <div id="arc-icon">◈</div>
-          <div id="arc-status">STANDBY</div>
+          <div id="arc-lbl">STANDBY</div>
         </div>
-      </div>
-
-      <!-- Chat log -->
-      <div id="chat-log"></div>
-
-      <!-- Input zone -->
-      <div id="input-zone">
-        <div id="waveform">
-          <div class="wb"></div><div class="wb"></div><div class="wb"></div>
-          <div class="wb"></div><div class="wb"></div><div class="wb"></div>
-          <div class="wb"></div><div class="wb"></div><div class="wb"></div>
-          <div class="wb"></div><div class="wb"></div><div class="wb"></div>
-        </div>
-        <button id="voice-btn" title="Click to speak / Hold for push-to-talk">
-          <span id="voice-icon">🎤</span>
-        </button>
-        <input id="text-input" type="text" placeholder='Type command or say "Hey Yahavi..." · Hindi / English supported' autocomplete="off" spellcheck="false">
-        <button id="send-btn">SEND ▶</button>
       </div>
     </div>
 
-    <!-- Right panel -->
-    <div class="panel" id="right-panel">
-      <div class="panel-hdr">◈ VOICE</div>
-      <div class="stat-row">
-        <span class="sl">Recognition</span>
-        <span class="sv" id="voice-status">Ready</span>
-      </div>
-      <div class="stat-row">
-        <span class="sl">TTS</span>
-        <span class="sv" id="tts-status">Enabled</span>
-      </div>
-      <div class="stat-row">
-        <span class="sl">Wake Word</span>
-        <span class="sv" id="wake-status">Listening</span>
-      </div>
-      <div class="stat-row">
-        <span class="sl">Language</span>
-        <span class="sv">HI/EN</span>
-      </div>
-
-      <div class="panel-hdr" style="margin-top:18px">◈ SESSION</div>
-      <div class="stat-row"><span class="sl">Messages</span><span class="sv" id="msg-count">0</span></div>
-      <div class="stat-row"><span class="sl">Uptime</span><span class="sv" id="uptime">0m</span></div>
-      <div class="stat-row"><span class="sl">Backend</span><span class="sv" id="backend-mode">—</span></div>
-
-      <div class="panel-hdr" style="margin-top:18px">◈ CONTROLS</div>
-      <label class="toggle-row">
-        <span class="sl">Auto-Speak</span>
-        <div class="toggle" id="tts-toggle" onclick="toggleTTS()"></div>
-      </label>
-      <label class="toggle-row">
-        <span class="sl">Wake Word</span>
-        <div class="toggle active" id="wake-toggle" onclick="toggleWake()"></div>
-      </label>
-      <div style="margin-top:10px">
-        <button class="ctrl-btn" onclick="clearChat()">🗑 Clear Log</button>
-        <button class="ctrl-btn" onclick="setGroqKey()">🔑 Set Groq Key</button>
-      </div>
-
-      <div class="panel-hdr" style="margin-top:18px">◈ ACTIVE TASK</div>
-      <div id="task-label" style="font-family:var(--mono);font-size:10px;color:var(--dim);margin-bottom:6px">Idle</div>
-      <div class="mini-bar"><div class="mini-fill" id="task-fill" style="width:0%"></div></div>
-    </div>
-
+    <!-- Messages -->
+    <div id="chat-log"></div>
   </div>
+
+  <!-- Input bar -->
+  <div id="input-bar">
+    <div id="wave-wrap">
+      <div class="wb"></div><div class="wb"></div><div class="wb"></div>
+      <div class="wb"></div><div class="wb"></div><div class="wb"></div>
+    </div>
+    <button id="mic-btn" onclick="toggleVoice()">🎤</button>
+    <input id="inp" type="text" placeholder="Type or tap mic to speak..." autocomplete="off" autocorrect="off" autocapitalize="off">
+    <button id="send-btn" onclick="submitText()">➤</button>
+  </div>
+
 </div>
 
 <script src="app.js"></script>
