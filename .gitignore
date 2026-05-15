@@ -1,73 +1,44 @@
-# Dependencies
-node_modules/
-frontend/.next/
-frontend/out/
-frontend/tsconfig.tsbuildinfo
-venv/
-env/
+# ── Secrets — NEVER commit these ──────────────────────
+.env
+*.pem
+*.key
+*.p12
+secrets/
+credentials/
+
+# ── Python ────────────────────────────────────────────
 __pycache__/
-*.pyc
+*.py[cod]
 *.pyo
 *.pyd
 .Python
-pip-log.txt
-
-# Environment
-.env
-.env.local
-.env.*.local
-!.env.example
-
-# Build outputs
+*.egg
+*.egg-info/
 dist/
 build/
-*.egg-info/
-*.egg
+.eggs/
 
-# IDE
+# ── Virtual environments ──────────────────────────────
+venv/
+.venv/
+env/
+.env/
+
+# ── Data & memory ────────────────────────────────────
+memory/yahavis_memory.json
+*.db
+*.sqlite
+
+# ── Logs ─────────────────────────────────────────────
+*.log
+logs/
+
+# ── IDE ───────────────────────────────────────────────
 .vscode/
 .idea/
 *.swp
-*.swo
-*~
 .DS_Store
+Thumbs.db
 
-# Logs
-logs/
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# Testing
-coverage/
-.nyc_output/
-
-# Misc
-.cache/
-.temp/
-tmp/
-*.tmp
-
-# Flutter/Dart
-mobile-app/.dart_tool/
-mobile-app/.packages
-mobile-app/build/
-mobile-app/ios/Pods/
-mobile-app/android/.gradle/
-mobile-app/android/app/debug/
-mobile-app/android/app/profile/
-mobile-app/android/app/release/
-
-# Python
-desktop-agent/venv/
-desktop-agent/__pycache__/
-desktop-agent/*.pyc
-desktop-agent/.pytest_cache/
-
-# Large files
-*.mp4
-*.mov
-*.avi
-*.zip
-*.tar.gz
+# ── Screenshots ───────────────────────────────────────
+screenshots/

@@ -2,8 +2,12 @@
    Live status, voice, WebSocket to Python backend.
 */
 
-const WS_URL   = 'ws://127.0.0.1:7071';
-const API_URL  = 'http://127.0.0.1:7070';
+// Auto-detect: use relative URLs when deployed, fallback to localhost in dev
+const IS_DEV   = location.hostname === '127.0.0.1' || location.hostname === 'localhost';
+const API_URL  = IS_DEV ? 'http://127.0.0.1:7070' : '';
+const WS_URL   = IS_DEV
+  ? 'ws://127.0.0.1:7071'
+  : (location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/ws';
 const BOOT_MSGS = [
   'Initializing neural core...',
   'Loading API rotation engine...',
@@ -258,15 +262,68 @@ function sendFromInput() {
 
 function sendCommand(text) {
   logMessage('user', text);
-  sendToServer('command', { text });
-  // Optimistic response
-  setTimeout(() => {
+
+  // Try SSE streaming first (cloud), fallback to WS (local)
+  if (!IS_DEV) {
+    streamCommand(text);
+  } else {
+    sendToServer('command', { text });
     fetch(`${API_URL}/api/command`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ text }),
     }).catch(() => {});
-  }, 50);
+  }
+}
+
+function streamCommand(text) {
+  const url = `${API_URL}/api/chat/stream?text=${encodeURIComponent(text)}`;
+  const es  = new EventSource(url);
+  let   responseEl = null;
+
+  es.onmessage = (e) => {
+    const data = JSON.parse(e.data);
+    if (data.chunk) {
+      if (!responseEl) {
+        responseEl = createStreamEntry();
+      }
+      appendToStreamEntry(responseEl, data.chunk);
+    }
+    if (data.done) {
+      es.close();
+      animateWave(false);
+    }
+    if (data.error) {
+      logMessage('system', `Error: ${data.error}`);
+      es.close();
+      animateWave(false);
+    }
+  };
+  es.onerror = () => {
+    es.close();
+    animateWave(false);
+  };
+  animateWave(true);
+}
+
+function createStreamEntry() {
+  const logEl  = document.getElementById('command-log');
+  const entry  = document.createElement('div');
+  entry.className = 'log-entry system';
+  entry.innerHTML = `
+    <div class="log-role">◆ YAHAVIS · ${timestamp()}</div>
+    <div class="stream-text"></div>
+  `;
+  logEl.appendChild(entry);
+  logEl.scrollTop = logEl.scrollHeight;
+  return entry;
+}
+
+function appendToStreamEntry(entry, chunk) {
+  const textEl = entry.querySelector('.stream-text');
+  if (textEl) textEl.textContent += chunk;
+  const logEl = document.getElementById('command-log');
+  logEl.scrollTop = logEl.scrollHeight;
 }
 
 // ── Utilities ─────────────────────────────────────────
