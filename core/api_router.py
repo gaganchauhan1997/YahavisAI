@@ -11,7 +11,7 @@ import os
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import AsyncIterator, Optional
+from typing import AsyncGenerator, AsyncIterator, Optional
 
 log = logging.getLogger("yahavis.api_router")
 
@@ -102,8 +102,12 @@ class APIRouter:
         system: Optional[str] = None,
         temperature: float = 0.7,
         max_tokens: int = 2048,
+        _attempt: int = 0,
     ) -> str:
         """Get a full completion from the best available provider."""
+        # Bug fix: cap retries to number of slots to avoid infinite recursion
+        if _attempt > len(self.slots):
+            raise RuntimeError("All API providers exhausted.")
         slot = self._get_active_slot()
         if not slot:
             raise RuntimeError("All API providers exhausted.")
@@ -117,7 +121,8 @@ class APIRouter:
             log.warning(f"[{slot.id}] Error: {e} — marking degraded, retrying")
             slot.status = "degraded"
             slot.last_error = str(e)
-            return await self.complete(messages, system, temperature, max_tokens)
+            return await self.complete(messages, system, temperature, max_tokens,
+                                       _attempt=_attempt + 1)
 
     async def stream(
         self,
@@ -153,7 +158,7 @@ class APIRouter:
             raise ValueError(f"Unknown provider: {slot.provider}")
 
     async def _call_stream(self, slot, messages, system,
-                           temperature, max_tokens) -> AsyncIterator[str]:
+                           temperature, max_tokens) -> AsyncGenerator[str, None]:
         if slot.provider == "ollama":
             async for chunk in self._stream_ollama(slot, messages, system,
                                                    temperature):
@@ -183,7 +188,11 @@ class APIRouter:
                                  json=payload, timeout=aiohttp.ClientTimeout(total=60)) as r:
                 r.raise_for_status()
                 data = await r.json()
-                return data["message"]["content"]
+                # Bug fix: guard against Ollama returning an error body
+                msg = data.get("message")
+                if not msg or "content" not in msg:
+                    raise RuntimeError(f"Ollama unexpected response: {data}")
+                return msg["content"]
 
     async def _stream_ollama(self, slot, messages, system,
                              temperature) -> AsyncIterator[str]:
@@ -198,10 +207,16 @@ class APIRouter:
         async with aiohttp.ClientSession() as sess:
             async with sess.post(f"{base_url}/api/chat", json=payload) as r:
                 async for line in r.content:
-                    if line:
+                    # Bug fix: skip blank/keep-alive lines to avoid JSONDecodeError
+                    line = line.strip()
+                    if not line:
+                        continue
+                    try:
                         data = json.loads(line)
-                        if chunk := data.get("message", {}).get("content", ""):
-                            yield chunk
+                    except json.JSONDecodeError:
+                        continue
+                    if chunk := data.get("message", {}).get("content", ""):
+                        yield chunk
 
     # ── Groq ─────────────────────────────────────────
     async def _call_groq(self, slot, messages, system,

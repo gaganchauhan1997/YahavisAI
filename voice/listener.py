@@ -62,10 +62,15 @@ class VoiceListener:
             await self._keyboard_loop(orchestrator)
             return
 
+        # Bug fix: capture the running loop in the async context and pass it
+        # to the daemon thread so asyncio.get_event_loop() isn't called from
+        # a non-main thread (raises RuntimeError on Python 3.12+)
+        self._loop = asyncio.get_running_loop()
+
         # Set up keyboard PTT shortcut in background
         threading.Thread(
             target=self._setup_ptt_shortcut,
-            args=(orchestrator,),
+            args=(orchestrator, self._loop),
             daemon=True,
         ).start()
 
@@ -165,7 +170,7 @@ class VoiceListener:
             log.warning(f"SR request error: {e}")
             return ""
 
-    def _setup_ptt_shortcut(self, orchestrator):
+    def _setup_ptt_shortcut(self, orchestrator, loop):
         """Set up Ctrl+Space as push-to-talk in background thread."""
         try:
             import keyboard
@@ -174,7 +179,7 @@ class VoiceListener:
                 PTT_SHORTCUT,
                 lambda: asyncio.run_coroutine_threadsafe(
                     self._ptt_activate(orchestrator),
-                    asyncio.get_event_loop(),
+                    loop,  # Bug fix: use captured loop, not get_event_loop()
                 ),
             )
             keyboard.wait()

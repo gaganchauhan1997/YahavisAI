@@ -64,6 +64,7 @@ class TaskOrchestrator:
         self._running: dict[str, Task] = {}
         self._history: list[Task] = []
         self._executors: dict[str, Callable] = {}
+        self._draining: bool = False   # Bug fix: prevent concurrent drain races
         self._register_executors()
         log.info("TaskOrchestrator ready.")
 
@@ -93,9 +94,11 @@ class TaskOrchestrator:
             asyncio.create_task(self.speaker.say(intent.voice_response))
 
         if not intent.is_confident(0.55):
-            await self.speaker.say(
-                "I'm not sure what you mean, Boss. Could you rephrase?"
-            )
+            # Bug fix: guard against speaker being None
+            if self.speaker:
+                await self.speaker.say(
+                    "I'm not sure what you mean, Boss. Could you rephrase?"
+                )
             return
 
         task = Task(
@@ -107,12 +110,19 @@ class TaskOrchestrator:
         asyncio.create_task(self._drain_queue())
 
     async def _drain_queue(self):
-        while not self._queue.empty() and len(self._running) < self.MAX_CONCURRENT:
-            try:
-                _, task = self._queue.get_nowait()
-            except asyncio.QueueEmpty:
-                break
-            asyncio.create_task(self._execute(task))
+        # Bug fix: prevent concurrent drains from spawning excess tasks
+        if self._draining:
+            return
+        self._draining = True
+        try:
+            while not self._queue.empty() and len(self._running) < self.MAX_CONCURRENT:
+                try:
+                    _, task = self._queue.get_nowait()
+                except asyncio.QueueEmpty:
+                    break
+                asyncio.create_task(self._execute(task))
+        finally:
+            self._draining = False
 
     async def _execute(self, task: Task):
         task.status = TaskStatus.RUNNING
@@ -231,7 +241,8 @@ class TaskOrchestrator:
         action = intent.action
         if action == "get_orders":
             orders = await ops.get_orders(filter_=intent.params.get("filter", "today"))
-            summary = f"Found {len(orders)} orders today."
+            # Bug fix: use summarize_orders() for proper currency + pluralization
+            summary = ops.summarize_orders(orders)
             if self.speaker:
                 await self.speaker.say(summary)
             return orders

@@ -128,11 +128,13 @@ class SystemOps:
         if sys.platform == "win32":
             subprocess.run(["shutdown", "/s", "/t", str(timer)])
         elif sys.platform == "darwin":
-            subprocess.run(["sudo", "shutdown", "-h",
-                            f"+{timer//60}" if timer else "now"])
+            # Bug fix: timers < 60s would produce "+0" which macOS rejects.
+            # Use "now" for anything under 60 seconds.
+            timer_arg = f"+{timer // 60}" if timer >= 60 else "now"
+            subprocess.run(["sudo", "shutdown", "-h", timer_arg])
         else:
-            subprocess.run(["shutdown", "-h",
-                            f"+{timer//60}" if timer else "now"])
+            timer_arg = f"+{timer // 60}" if timer >= 60 else "now"
+            subprocess.run(["shutdown", "-h", timer_arg])
 
     def cancel_shutdown(self):
         if sys.platform == "win32":

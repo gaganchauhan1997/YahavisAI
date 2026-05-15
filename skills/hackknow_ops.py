@@ -2,38 +2,62 @@
 YAHAVIS — skills/hackknow_ops.py
 Hackknow platform operations: WooCommerce, site health, GCP pings.
 Credentials injected from .env — never hardcoded.
+
+Bug fixes applied:
+- Module-level os.getenv moved to lazy _auth() / _wc_base() methods
+  so credentials are read AFTER load_dotenv() runs (not at import time).
+- update_product now has credential guard.
+- float("") crash fixed in get_revenue_summary and summarize_orders.
+- FRONTEND_URL documented in .env.example.
 """
 
 import asyncio
 import logging
 import os
+import time
 from typing import Optional
 
 import aiohttp
 
 log = logging.getLogger("yahavis.hackknow")
 
-WC_SITE     = os.getenv("WC_SITE_URL", "https://shop.hackknow.com")
-WC_KEY      = os.getenv("WC_CONSUMER_KEY", "")
-WC_SECRET   = os.getenv("WC_CONSUMER_SECRET", "")
-WC_API_BASE = f"{WC_SITE}/wp-json/wc/v3"
-FRONTEND    = os.getenv("FRONTEND_URL", "https://hackknow.com")
+
+def _wc_key() -> str:
+    return os.getenv("WC_CONSUMER_KEY", "")
+
+
+def _wc_secret() -> str:
+    return os.getenv("WC_CONSUMER_SECRET", "")
+
+
+def _wc_site() -> str:
+    return os.getenv("WC_SITE_URL", "https://shop.hackknow.com")
+
+
+def _wc_api_base() -> str:
+    return f"{_wc_site()}/wp-json/wc/v3"
+
+
+def _frontend() -> str:
+    return os.getenv("FRONTEND_URL", "https://hackknow.com")
 
 
 class HackknowOps:
     """All Hackknow platform operations for YAHAVIS."""
 
     def _auth(self) -> tuple:
-        return (WC_KEY, WC_SECRET)
+        """Return (key, secret) — read lazily so .env is already loaded."""
+        return (_wc_key(), _wc_secret())
 
     async def check_site_status(self, url: str = None) -> dict:
         """Ping site and return status code + latency."""
-        target = url or WC_SITE
-        import time
+        target = url or _wc_site()
         try:
             start = time.time()
             async with aiohttp.ClientSession() as sess:
-                async with sess.get(target, timeout=aiohttp.ClientTimeout(total=10)) as r:
+                async with sess.get(
+                    target, timeout=aiohttp.ClientTimeout(total=10)
+                ) as r:
                     latency = round((time.time() - start) * 1000)
                     return {
                         "url": target,
@@ -51,7 +75,8 @@ class HackknowOps:
         per_page: int = 20,
     ) -> list:
         """Fetch WooCommerce orders."""
-        if not WC_KEY:
+        key, secret = self._auth()
+        if not key:
             log.warning("WC credentials not configured — returning mock data")
             return self._mock_orders()
 
@@ -64,9 +89,9 @@ class HackknowOps:
         try:
             async with aiohttp.ClientSession() as sess:
                 async with sess.get(
-                    f"{WC_API_BASE}/orders",
+                    f"{_wc_api_base()}/orders",
                     params=params,
-                    auth=aiohttp.BasicAuth(WC_KEY, WC_SECRET),
+                    auth=aiohttp.BasicAuth(key, secret),
                     timeout=aiohttp.ClientTimeout(total=15),
                 ) as r:
                     r.raise_for_status()
@@ -79,7 +104,8 @@ class HackknowOps:
 
     async def create_product(self, data: dict) -> dict:
         """Create a new WooCommerce product."""
-        if not WC_KEY:
+        key, secret = self._auth()
+        if not key:
             log.warning("WC credentials not configured")
             return {"error": "No WC credentials"}
 
@@ -97,14 +123,16 @@ class HackknowOps:
         try:
             async with aiohttp.ClientSession() as sess:
                 async with sess.post(
-                    f"{WC_API_BASE}/products",
+                    f"{_wc_api_base()}/products",
                     json=product,
-                    auth=aiohttp.BasicAuth(WC_KEY, WC_SECRET),
+                    auth=aiohttp.BasicAuth(key, secret),
                     timeout=aiohttp.ClientTimeout(total=15),
                 ) as r:
                     r.raise_for_status()
                     result = await r.json()
-                    log.info(f"Product created: {result.get('id')} — {result.get('name')}")
+                    log.info(
+                        f"Product created: {result.get('id')} — {result.get('name')}"
+                    )
                     return result
         except Exception as e:
             log.error(f"Product creation failed: {e}")
@@ -112,12 +140,18 @@ class HackknowOps:
 
     async def update_product(self, product_id: int, data: dict) -> dict:
         """Update an existing WooCommerce product."""
+        key, secret = self._auth()
+        # Bug fix: credential guard (missing in original)
+        if not key:
+            log.warning("WC credentials not configured")
+            return {"error": "No WC credentials"}
+
         try:
             async with aiohttp.ClientSession() as sess:
                 async with sess.put(
-                    f"{WC_API_BASE}/products/{product_id}",
+                    f"{_wc_api_base()}/products/{product_id}",
                     json=data,
-                    auth=aiohttp.BasicAuth(WC_KEY, WC_SECRET),
+                    auth=aiohttp.BasicAuth(key, secret),
                     timeout=aiohttp.ClientTimeout(total=15),
                 ) as r:
                     r.raise_for_status()
@@ -129,7 +163,8 @@ class HackknowOps:
     async def get_revenue_summary(self) -> dict:
         """Get today's total revenue and order count."""
         orders = await self.get_orders(filter_="today", status="completed")
-        total = sum(float(o.get("total", 0)) for o in orders)
+        # Bug fix: `or 0` handles empty string totals from WC draft orders
+        total = sum(float(o.get("total") or 0) for o in orders)
         return {
             "orders_today": len(orders),
             "revenue_today": round(total, 2),
@@ -138,7 +173,7 @@ class HackknowOps:
 
     async def check_frontend_build(self) -> dict:
         """Check if the Hackknow frontend is live and responsive."""
-        return await self.check_site_status(FRONTEND)
+        return await self.check_site_status(_frontend())
 
     async def generate_product_description(self, name: str, brain=None) -> str:
         """Use YAHAVIS brain to write a WooCommerce product description."""
@@ -154,10 +189,20 @@ class HackknowOps:
 
     def _mock_orders(self) -> list:
         return [
-            {"id": 1001, "status": "completed", "total": "299.00",
-             "currency": "INR", "billing": {"first_name": "Demo", "last_name": "User"}},
-            {"id": 1002, "status": "processing", "total": "499.00",
-             "currency": "INR", "billing": {"first_name": "Test", "last_name": "Buyer"}},
+            {
+                "id": 1001,
+                "status": "completed",
+                "total": "299.00",
+                "currency": "INR",
+                "billing": {"first_name": "Demo", "last_name": "User"},
+            },
+            {
+                "id": 1002,
+                "status": "processing",
+                "total": "499.00",
+                "currency": "INR",
+                "billing": {"first_name": "Test", "last_name": "Buyer"},
+            },
         ]
 
     def summarize_orders(self, orders: list) -> str:
@@ -165,7 +210,10 @@ class HackknowOps:
         if not orders:
             return "No orders found, Boss."
         count = len(orders)
-        total = sum(float(o.get("total", 0)) for o in orders)
+        # Bug fix: `or 0` handles empty string totals from WooCommerce draft orders
+        total = sum(float(o.get("total") or 0) for o in orders)
         currency = orders[0].get("currency", "INR") if orders else "INR"
-        return (f"Found {count} order{'s' if count != 1 else ''}, Boss. "
-                f"Total revenue: {currency} {total:,.2f}.")
+        return (
+            f"Found {count} order{'s' if count != 1 else ''}, Boss. "
+            f"Total revenue: {currency} {total:,.2f}."
+        )

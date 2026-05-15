@@ -80,8 +80,11 @@ class YahaviBrain:
             temperature=0.7,
         )
 
-        self.add_to_context("user", user_input)
-        self.add_to_context("assistant", response)
+        # Bug fix: only update context when use_context=True to avoid polluting
+        # the rolling window with internal one-shot tool prompts
+        if use_context:
+            self.add_to_context("user", user_input)
+            self.add_to_context("assistant", response)
 
         if cache:
             self._cache[user_input] = response

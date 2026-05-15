@@ -143,5 +143,11 @@ class LongTermMemory:
         new_data = json.loads(json_str)
         for category, items in new_data.items():
             if category in self._data and isinstance(items, dict):
-                self._data[category].update(items)
+                # Bug fix: only merge properly structured records so all_facts()
+                # doesn't crash with "string indices must be integers" on raw values
+                valid = {
+                    k: v for k, v in items.items()
+                    if isinstance(v, dict) and "value" in v
+                }
+                self._data[category].update(valid)
         self.save()

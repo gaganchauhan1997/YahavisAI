@@ -79,9 +79,8 @@ class CodeWriter:
             safe_name = "".join(c if c.isalnum() else "_" for c in description[:30])
             save_path = str(self.OUTPUT_DIR / f"yahavis_{safe_name}_{timestamp}{ext}")
 
-        Path(save_path).write_text(code, encoding="utf-8")
-        log.info(f"Code saved: {save_path}")
-
+        # Bug fix: removed redundant Path.write_text() here — save_and_open()
+        # already writes the file, so writing twice caused a double-write race.
         self.save_and_open(code, filename=save_path)
         return code
 

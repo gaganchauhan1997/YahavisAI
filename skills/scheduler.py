@@ -34,8 +34,13 @@ class YahavisScheduler:
             log.warning("APScheduler not installed — using basic asyncio timers")
             return None
 
-    def remind_in(self, message: str, seconds: int):
-        """Set a reminder after `seconds` seconds."""
+    async def remind_in(self, message: str, seconds: int) -> str:
+        """Set a reminder after `seconds` seconds.
+
+        Bug fix: must be async so asyncio.create_task() is called from within
+        a running event loop. Sync callers outside asyncio will get a TypeError —
+        use asyncio.ensure_future() or call from an async context.
+        """
         async def _remind():
             await asyncio.sleep(seconds)
             log.info(f"Reminder: {message}")

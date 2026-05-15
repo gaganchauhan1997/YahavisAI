@@ -19,7 +19,8 @@ from dotenv import load_dotenv
 ROOT = Path(__file__).parent
 sys.path.insert(0, str(ROOT))
 
-load_dotenv()
+# Bug fix: pass explicit path so .env loads correctly regardless of CWD
+load_dotenv(dotenv_path=ROOT / ".env")
 
 # ── Logging ───────────────────────────────────────────
 logging.basicConfig(
@@ -87,7 +88,8 @@ async def main():
         ui_task = asyncio.create_task(ui.start())
     except ImportError:
         log.warning("UI server dependencies missing — running headless.")
-        ui_task = asyncio.sleep(0)  # no-op
+        # Bug fix: wrap in create_task so gather gets a Task, not a bare coroutine
+        ui_task = asyncio.create_task(asyncio.sleep(0))
 
     await speaker.say("YAHAVIS online. Ready for your commands, Boss.")
     print("\n\033[36m[INFO]\033[0m Dashboard  → http://localhost:7070")
@@ -105,7 +107,8 @@ async def main():
     finally:
         log.info("Shutting down YAHAVIS ...")
         await speaker.say("Shutting down. Goodbye, Boss.")
-        long_mem.save()
+        # Bug fix: run blocking file write off the event loop
+        await asyncio.to_thread(long_mem.save)
 
 
 if __name__ == "__main__":
