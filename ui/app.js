@@ -211,27 +211,74 @@ async function streamDirect(text) {
   setArc('standby');
 }
 
-// ── TTS ────────────────────────────────────────────────
-let spQ = [], spBusy = false;
+// ── TTS — ElevenLabs cloned voice (falls back to browser) ──
+let spQ = [], spBusy = false, audioCtx = null;
+
 function speak(text) {
-  if (!ttsOn || !window.speechSynthesis) return;
+  if (!ttsOn) return;
   const clean = text.replace(/[*#`_~\[\]>]/g,'').replace(/\n+/g,' ').trim();
   if (!clean) return;
-  spQ.push(clean); if (!spBusy) drainSpeak();
+  // Break into <=300-char chunks for low latency
+  const chunks = splitText(clean, 300);
+  chunks.forEach(c => spQ.push(c));
+  if (!spBusy) drainSpeak();
 }
-function drainSpeak() {
-  if (!spQ.length) { spBusy=false; return; }
+
+function splitText(text, maxLen) {
+  const chunks = []; let cur = '';
+  for (const word of text.split(' ')) {
+    if ((cur+' '+word).length > maxLen && cur) { chunks.push(cur.trim()); cur = word; }
+    else cur += ' ' + word;
+  }
+  if (cur.trim()) chunks.push(cur.trim());
+  return chunks;
+}
+
+async function drainSpeak() {
+  if (!spQ.length) { spBusy = false; return; }
   spBusy = true;
-  const u = new SpeechSynthesisUtterance(spQ.shift());
+  const text = spQ.shift();
+  try {
+    if (mode === 'server') {
+      // Try ElevenLabs cloned voice via worker
+      const r = await fetch('/api/tts', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ text }),
+      });
+      if (r.ok && r.headers.get('Content-Type')?.includes('audio')) {
+        const blob = await r.blob();
+        await playAudioBlob(blob);
+        drainSpeak(); return;
+      }
+      const d = await r.json().catch(()=>({}));
+      if (d.fallback) { browserSpeak(text); return; }
+    }
+    browserSpeak(text);
+  } catch { browserSpeak(text); }
+}
+
+function playAudioBlob(blob) {
+  return new Promise((res, rej) => {
+    const url = URL.createObjectURL(blob);
+    const audio = new Audio(url);
+    audio.onended = () => { URL.revokeObjectURL(url); res(); drainSpeak(); };
+    audio.onerror = (e) => { URL.revokeObjectURL(url); rej(e); drainSpeak(); };
+    audio.play().catch(rej);
+  });
+}
+
+function browserSpeak(text) {
+  if (!window.speechSynthesis) { drainSpeak(); return; }
+  const u = new SpeechSynthesisUtterance(text);
   u.rate=1.0; u.pitch=0.88; u.volume=1; u.lang='en-IN';
   const vs = speechSynthesis.getVoices();
-  const v = vs.find(v=>v.name.toLowerCase().includes('male')&&v.lang.startsWith('en'))
-    || vs.find(v=>v.lang==='en-IN')
-    || vs.find(v=>v.lang.startsWith('en')&&!v.name.toLowerCase().includes('female'));
+  const v = vs.find(v=>v.lang==='en-IN') || vs.find(v=>v.lang.startsWith('en'));
   if (v) u.voice = v;
   u.onend = u.onerror = drainSpeak;
   speechSynthesis.speak(u);
 }
+
 function stopSpeak(){ speechSynthesis.cancel(); spQ=[]; spBusy=false; }
 
 // ── VOICE RECOGNITION ─────────────────────────────────
