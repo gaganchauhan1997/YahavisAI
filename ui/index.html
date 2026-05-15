@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>YAHAVIS — Yahavi AI System</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- Boot overlay -->
+<div id="boot-overlay">
+  <div id="boot-logo">Y A H A V I S</div>
+  <div style="font-family:monospace;font-size:11px;color:#506070;letter-spacing:2px">
+    YAHAVI AI SYSTEM v1.0 · by Hackknow
+  </div>
+  <div id="boot-progress"><div id="boot-progress-fill"></div></div>
+  <div id="boot-status">Initializing...</div>
+</div>
+
+<!-- Main app -->
+<div id="app">
+
+  <!-- Header -->
+  <header id="header">
+    <div id="logo">Y<span>A</span>HAVIS <span style="font-size:11px;color:#506070;font-weight:400;letter-spacing:1px">v1.0</span></div>
+    <div style="font-family:monospace;font-size:10px;color:#506070;letter-spacing:1px">
+      YAHAVI AI SYSTEM · by Hackknow · Operator: Myth
+    </div>
+    <div id="header-status">
+      <div style="display:flex;align-items:center;gap:6px;font-family:monospace;font-size:10px;color:#506070">
+        <div class="status-dot"></div> ONLINE
+      </div>
+      <div id="time-display" style="font-family:monospace;font-size:12px;color:#506070"></div>
+    </div>
+  </header>
+
+  <!-- Left panel: API Health -->
+  <aside class="panel" id="left-panel">
+    <div class="panel-title">◈ API HEALTH</div>
+    <div id="api-slots">
+      <!-- Filled by app.js -->
+      <div class="api-slot">
+        <div class="api-slot-name">OLLAMA / MISTRAL</div>
+        <div class="api-slot-bar"><div class="api-slot-fill" style="width:5%"></div></div>
+        <div class="api-slot-meta"><span>✓ LOCAL</span><span>Priority 1</span></div>
+      </div>
+      <div class="api-slot">
+        <div class="api-slot-name">GROQ / LLAMA3-70B</div>
+        <div class="api-slot-bar"><div class="api-slot-fill" style="width:12%"></div></div>
+        <div class="api-slot-meta"><span>✓ ACTIVE</span><span>12% used</span></div>
+      </div>
+      <div class="api-slot">
+        <div class="api-slot-name">GROQ / MIXTRAL</div>
+        <div class="api-slot-bar"><div class="api-slot-fill" style="width:3%"></div></div>
+        <div class="api-slot-meta"><span>✓ ACTIVE</span><span>3% used</span></div>
+      </div>
+      <div class="api-slot">
+        <div class="api-slot-name">GEMINI / FLASH</div>
+        <div class="api-slot-bar"><div class="api-slot-fill warn" style="width:60%"></div></div>
+        <div class="api-slot-meta"><span>✓ ACTIVE</span><span>60% used</span></div>
+      </div>
+      <div class="api-slot">
+        <div class="api-slot-name">GROQ / GEMMA2</div>
+        <div class="api-slot-bar"><div class="api-slot-fill" style="width:0%"></div></div>
+        <div class="api-slot-meta"><span>✓ STANDBY</span><span>0% used</span></div>
+      </div>
+    </div>
+
+    <div class="panel-title" style="margin-top:16px">◈ QUICK ACTIONS</div>
+    <div id="quick-actions">
+      <button class="quick-btn" data-cmd="screenshot le aur bata kya hai screen pe">📸 Screenshot</button>
+      <button class="quick-btn" data-cmd="hackknow ke orders check kar">📦 Orders</button>
+      <button class="quick-btn" data-cmd="system info bata">💻 Sys Info</button>
+      <button class="quick-btn" data-cmd="web search kar latest AI news">🔍 Search</button>
+      <button class="quick-btn" data-cmd="VS Code khol">⌨ VS Code</button>
+      <button class="quick-btn" data-cmd="Chrome khol">🌐 Chrome</button>
+      <button class="quick-btn" data-cmd="volume 50 percent kar">🔊 Vol 50%</button>
+      <button class="quick-btn" data-cmd="lock screen">🔒 Lock</button>
+    </div>
+  </aside>
+
+  <!-- Center: Command log -->
+  <main class="panel" id="center-panel">
+    <div class="panel-title">◈ COMMAND LOG</div>
+    <div id="command-log">
+      <div class="log-entry system">
+        <div class="log-role">◆ YAHAVIS · BOOT</div>
+        <div>All systems operational. Free intelligence, infinite capability.</div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Right panel: System stats + Memory -->
+  <aside class="panel" id="right-panel">
+    <div class="panel-title">◈ SYSTEM STATS</div>
+
+    <div class="stat-row">
+      <span class="stat-label">CPU</span>
+      <span class="stat-value" id="stat-cpu">—</span>
+    </div>
+    <div class="mini-bar"><div class="mini-bar-fill" id="bar-cpu" style="width:0%"></div></div>
+
+    <div class="stat-row">
+      <span class="stat-label">RAM</span>
+      <span class="stat-value" id="stat-ram">—</span>
+    </div>
+    <div class="mini-bar"><div class="mini-bar-fill" id="bar-ram" style="width:0%"></div></div>
+
+    <div class="stat-row">
+      <span class="stat-label">BATTERY</span>
+      <span class="stat-value" id="stat-bat">—</span>
+    </div>
+
+    <div class="stat-row">
+      <span class="stat-label">TASKS DONE</span>
+      <span class="stat-value" id="stat-tasks">0</span>
+    </div>
+
+    <div class="stat-row">
+      <span class="stat-label">SESSION</span>
+      <span class="stat-value" id="stat-session">0m</span>
+    </div>
+
+    <div class="panel-title" style="margin-top:16px">◈ MEMORY</div>
+    <div id="memory-list">
+      <span class="memory-tag">Myth = Boss</span>
+      <span class="memory-tag">shop.hackknow.com</span>
+      <span class="memory-tag">VS Code</span>
+      <span class="memory-tag">IST timezone</span>
+    </div>
+
+    <div class="panel-title" style="margin-top:16px">◈ ACTIVE TASK</div>
+    <div id="task-bar">
+      <div class="task-progress-wrap">
+        <span class="task-label" id="task-label">Idle</span>
+        <div class="task-bar-track">
+          <div class="task-bar-fill" id="task-progress" style="width:0%"></div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Bottom bar: Voice + Input -->
+  <footer id="bottom-bar">
+    <div id="waveform">
+      <div class="wave-bar"></div>
+      <div class="wave-bar"></div>
+      <div class="wave-bar"></div>
+      <div class="wave-bar"></div>
+      <div class="wave-bar"></div>
+      <div class="wave-bar"></div>
+      <div class="wave-bar"></div>
+      <div class="wave-bar"></div>
+    </div>
+
+    <button id="voice-btn" title="Click to speak (or say 'Hey Yahavi')">🎤</button>
+
+    <input
+      id="text-input"
+      type="text"
+      placeholder="Type a command or 'Hey Yahavi...' (Hindi/English supported)"
+      autocomplete="off"
+      spellcheck="false"
+    >
+
+    <button id="send-btn">SEND ▶</button>
+  </footer>
+
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>

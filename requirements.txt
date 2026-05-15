@@ -1,0 +1,78 @@
+# ══════════════════════════════════════════════════════
+# YAHAVIS — requirements.txt
+# Install: pip install -r requirements.txt
+# Python 3.10+ required | Windows 10/11 + 16GB RAM
+# ══════════════════════════════════════════════════════
+
+# ── Core / Async ──────────────────────────────────────
+python-dotenv>=1.0.0
+aiohttp>=3.9.0
+aiofiles>=23.2.1
+asyncio-throttle>=1.0.2
+
+# ── LLM / AI ─────────────────────────────────────────
+ollama>=0.1.8                  # Local Ollama client
+groq>=0.9.0                    # Groq Cloud free tier
+google-generativeai>=0.7.0     # Gemini free tier fallback
+openai>=1.30.0                 # OpenRouter compatible
+
+# ── Voice Input ───────────────────────────────────────
+SpeechRecognition>=3.10.1
+pyaudio>=0.2.14                # Mic input (requires portaudio)
+faster-whisper>=1.0.1          # Local Whisper transcription
+pvporcupine>=3.0.0             # Wake word (free tier key)
+
+# ── Voice Output ──────────────────────────────────────
+edge-tts>=6.1.10               # Microsoft TTS (free, natural)
+pyttsx3>=2.90                  # Offline TTS fallback
+pygame>=2.5.2                  # Audio playback
+
+# ── Computer Control ──────────────────────────────────
+pyautogui>=0.9.54              # Mouse + keyboard
+pynput>=1.7.6                  # Global keyboard/mouse hooks
+pygetwindow>=0.0.9             # Window management
+psutil>=5.9.8                  # Process management
+keyboard>=0.13.5               # Hotkey support
+
+# ── Browser Automation ────────────────────────────────
+playwright>=1.44.0             # Browser control (async)
+# After install: python -m playwright install chromium
+
+# ── Screen Vision ─────────────────────────────────────
+Pillow>=10.3.0                 # Screenshot + image ops
+pytesseract>=0.3.10            # OCR (optional)
+mss>=9.0.1                     # Fast screen capture
+
+# ── File + System ─────────────────────────────────────
+watchdog>=4.0.0                # File system events
+send2trash>=1.8.3              # Safe file deletion
+pyperclip>=1.8.2               # Clipboard access
+screen-brightness-control>=0.22.1  # Brightness control (Windows)
+comtypes>=1.4.1                # Windows COM (volume control)
+pycaw>=20240210                # Windows audio control
+
+# ── Web Search (free) ─────────────────────────────────
+duckduckgo-search>=6.2.0       # DDG scraper, no API key
+beautifulsoup4>=4.12.3         # HTML parsing
+requests>=2.32.0               # HTTP client
+lxml>=5.2.0                    # Fast HTML parser
+
+# ── WooCommerce (Hackknow) ────────────────────────────
+WooCommerce>=3.0.0             # WC REST API client
+
+# ── Scheduling ────────────────────────────────────────
+APScheduler>=3.10.4            # Cron-style scheduler
+schedule>=1.2.2                # Simple scheduler
+
+# ── UI Server ─────────────────────────────────────────
+fastapi>=0.111.0               # UI API server
+uvicorn[standard]>=0.29.0      # ASGI server
+websockets>=12.0               # Live push to dashboard
+jinja2>=3.1.4                  # HTML templating
+
+# ── Utilities ─────────────────────────────────────────
+rich>=13.7.1                   # Pretty terminal output
+tqdm>=4.66.4                   # Progress bars
+pydantic>=2.7.0                # Data validation
+python-multipart>=0.0.9        # Form data parsing
+colorama>=0.4.6                # Windows color support

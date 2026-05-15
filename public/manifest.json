@@ -1,0 +1,26 @@
+{
+  "name": "YAHAVIS — Yahavi AI System",
+  "short_name": "YAHAVIS",
+  "description": "Personal JARVIS AI assistant by Hackknow. Free intelligence, infinite capability.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0a0f",
+  "theme_color": "#00f0ff",
+  "orientation": "landscape",
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ],
+  "shortcuts": [
+    {
+      "name": "Voice Command",
+      "url": "/?action=voice",
+      "description": "Activate YAHAVIS voice interface"
+    },
+    {
+      "name": "Check Orders",
+      "url": "/?cmd=orders",
+      "description": "Check Hackknow WooCommerce orders"
+    }
+  ]
+}

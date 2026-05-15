@@ -1,216 +1,183 @@
-# 🤖 YahavisAI - AI Operating System
-
-[![GitHub Stars](https://img.shields.io/github/stars/gaganchauhan1997/YahavisAI?style=social)](https://github.com/gaganchauhan1997/YahavisAI)
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Python](https://img.shields.io/badge/python-3.11+-blue.svg)](https://python.org)
-[![Node](https://img.shields.io/badge/node-18+-green.svg)](https://nodejs.org)
-
-> **Yahavis-inspired AI Operating System with cross-platform automation**
-
-YahavisAI is a production-ready AI assistant that works across **Web**, **Android**, and **Windows Desktop**. Inspired by Iron Man's Yahavis, it provides voice-controlled automation, workflow orchestration, and intelligent task management.
-
-## ✨ Features
-
-### 🎯 Core Capabilities
-- **Voice Commands** - Hindi + English speech recognition
-- **AI Orchestration** - Gemini 2.5 powered intent understanding
-- **Cross-Device Sync** - Real-time communication across all devices
-- **Workflow Automation** - n8n integration for complex tasks
-- **Memory System** - Short & long-term context awareness
-
-### 🌐 Supported Platforms
-| Platform | Features |
-|----------|----------|
-| **Web Dashboard** | Chat UI, workflow designer, device management |
-| **Android App** | Floating bubble, accessibility automation, voice |
-| **Windows Desktop** | Browser automation, desktop control, file management |
-
-### 🤖 Automation Types
-- **Communication**: WhatsApp, Email, SMS
-- **Social Media**: Instagram posts, stories, DMs
-- **Browser**: Chrome automation, web scraping, searches
-- **Desktop**: App control, keyboard/mouse, screenshots
-- **System**: File management, volume, brightness, shutdown
-
-## 🏗️ Architecture
+# YAHAVIS — Yahavi AI System
 
 ```
-┌─────────────┐     ┌─────────────┐     ┌─────────────┐
-│  Web UI     │     │ Mobile App  │     │   Desktop   │
-│  (Next.js)  │     │  (Flutter)  │     │   Agent     │
-└──────┬──────┘     └──────┬──────┘     └──────┬──────┘
-       │                   │                   │
-       └───────────────────┼───────────────────┘
-                           │ WebSocket
-                           ▼
-               ┌───────────────────────┐
-               │   FastAPI Backend    │
-               │  ├─ AI Orchestrator  │
-               │  ├─ Task Queue        │
-               │  ├─ Memory System     │
-               │  └─ n8n Integration   │
-               └───────────────────────┘
-                           │
-               ┌───────────┴───────────┐
-               ▼                       ▼
-        ┌─────────────┐         ┌─────────────┐
-        │  Supabase   │         │    Redis    │
-        │  (Auth+DB)  │         │   (Queue)   │
-        └─────────────┘         └─────────────┘
+ ██╗   ██╗ █████╗ ██╗  ██╗ █████╗ ██╗   ██╗██╗███████╗
+  ╚██╗ ██╔╝██╔══██╗██║  ██║██╔══██╗██║   ██║██║██╔════╝
+   ╚████╔╝ ███████║███████║███████║██║   ██║██║███████╗
+    ╚██╔╝  ██╔══██║██╔══██║██╔══██║╚██╗ ██╔╝██║╚════██║
+     ██║   ██║  ██║██║  ██║██║  ██║ ╚████╔╝ ██║███████║
+     ╚═╝   ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝  ╚═══╝  ╚═╝╚══════╝
 ```
 
-## 🚀 Quick Start
+**Yahavi AI System v1.0** · Built by [Hackknow](https://hackknow.com) · Operator: Myth
 
-### Prerequisites
-- Python 3.11+
-- Node.js 18+
-- Flutter 3.0+ (for mobile)
-- Redis (for task queue)
-- Supabase account
+> *"Free intelligence, infinite capability."*
 
-### 1. Clone & Setup
-
-```bash
-git clone https://github.com/gaganchauhan1997/YahavisAI.git
-cd YahavisAI
-```
-
-### 2. Backend Setup
-
-```bash
-cd backend
-python -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
-pip install -r requirements.txt
-
-# Copy environment variables
-cp .env.example .env
-# Edit .env with your API keys
-
-# Run server
-uvicorn main:app --reload
-```
-
-### 3. Frontend Setup
-
-```bash
-cd frontend
-npm install
-
-# Copy environment
-cp .env.example .env.local
-
-# Run dev server
-npm run dev
-```
-
-### 4. Desktop Agent Setup
-
-```bash
-cd desktop-agent
-python -m venv venv
-venv\Scripts\activate  # Windows
-pip install -r requirements.txt
-
-python main.py
-```
-
-### 5. Mobile App
-
-```bash
-cd mobile-app
-flutter pub get
-flutter run
-```
-
-## ⚙️ Environment Variables
-
-Create `.env` files in each project directory:
-
-### Backend (`backend/.env`)
-```env
-# Required
-GEMINI_API_KEY=your_gemini_api_key
-SUPABASE_URL=your_supabase_url
-SUPABASE_KEY=your_supabase_key
-SECRET_KEY=your_jwt_secret
-
-# Optional
-REDIS_URL=redis://localhost:6379/0
-N8N_WEBHOOK_URL=your_n8n_url
-```
-
-### Frontend (`frontend/.env.local`)
-```env
-NEXT_PUBLIC_API_URL=http://localhost:8000
-NEXT_PUBLIC_WS_URL=ws://localhost:8000/ws
-```
-
-## 📚 Documentation
-
-| Document | Description |
-|----------|-------------|
-| [ARCHITECTURE.md](docs/ARCHITECTURE.md) | System architecture & design |
-| [API.md](docs/API.md) | REST API & WebSocket reference |
-| [AUTOMATION.md](docs/AUTOMATION.md) | Creating custom automations |
-| [DEPLOYMENT.md](docs/DEPLOYMENT.md) | Production deployment guide |
-
-## 🎯 Example Commands
-
-### Voice Commands (Hindi + English)
-```
-"Rahul ko message bhejo ke meeting 3 baje hai"
-"Post my photo on Instagram with AI caption"
-"Chrome open karo aur Python tutorials search karo"
-"File copy karo Documents se Desktop pe"
-"Volume 50% karo"
-```
-
-### AI Response Structure
-```json
-{
-  "response_text": "I'm sending message the message to...",
-  "confidence": 0.95,
-  "actions": [
-    {
-      "action": "send_whatsapp",
-      "params": {"contact": "Rahul", "message": "Meeting 3 baje hai"},
-      "device_target": "mobile",
-      "requires_confirmation": false
-    }
-  ]
-}
-```
-
-## 🔐 Security
-
-- JWT authentication with refresh tokens
-- End-to-end encryption for sensitive data
-- Rate limiting on all APIs
-- Confirmation required for destructive actions
-- Secure WebSocket connections
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit changes (`git commit -m 'Add amazing feature'`)
-4. Push to branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## 📄 License
-
-MIT License - see [LICENSE](LICENSE) file
-
-## 🙏 Acknowledgments
-
-- Google Gemini API for AI orchestration
-- OpenAI Whisper for voice recognition
-- n8n for workflow automation
-- Supabase for backend infrastructure
+A fully local, 100% free JARVIS-style AI assistant for Windows 10/11.
+Voice-controlled. Computer-controlling. Hackknow-integrated.
 
 ---
 
-**⭐ Star this repo if you find it useful!**
+## Features
 
-Built with ❤️ by [Gagan Chauhan](https://github.com/gaganchauhan1997)
+| Capability         | Technology                                    |
+|--------------------|-----------------------------------------------|
+| 🧠 LLM Brain       | Ollama (local) → Groq → Gemini (free fallback)|
+| 🎤 Voice Input     | Faster-Whisper (local) + SpeechRecognition    |
+| 🔊 Voice Output    | edge-tts (Microsoft Neural) + pyttsx3         |
+| 🖱️ Computer Control| pyautogui + pynput + pygetwindow              |
+| 📁 File Ops        | Python os, shutil, pathlib                    |
+| 🌐 Browser Auto    | Playwright (async, Chromium)                  |
+| 👁️ Screen Vision   | PIL + pytesseract + Ollama llava              |
+| 🏪 Hackknow Ops    | WooCommerce REST API                          |
+| 🔍 Web Search      | DuckDuckGo (no API key needed)                |
+| 💻 UI Dashboard    | FastAPI + WebSocket + Neon HUD                |
+
+---
+
+## Quick Start
+
+### 1. Prerequisites
+- Python 3.10+
+- Windows 10/11 (16GB RAM recommended)
+- [Ollama](https://ollama.ai) installed and running locally
+- Git
+
+### 2. Install Ollama + pull model
+```bash
+# Download from https://ollama.ai and install
+ollama pull mistral
+```
+
+### 3. Clone and install
+```bash
+git clone https://github.com/gaganchauhan1997/YahavisAI.git
+cd YahavisAI
+pip install -r requirements.txt
+python -m playwright install chromium
+```
+
+### 4. Configure
+```bash
+cp .env.example .env
+# Edit .env — add Groq/Gemini keys (optional, free tier)
+```
+
+### 5. Run
+```bash
+python main.py
+```
+
+YAHAVIS boots, opens the HUD at **http://localhost:7070**, and listens for **"Hey Yahavi"**.
+
+---
+
+## Voice Commands
+
+Say **"Hey Yahavi"** followed by any of these (Hindi/English mix works):
+
+```
+"Hey Yahavi, open VS Code"
+"Hey Yahavi, screenshot le aur bata screen pe kya hai"
+"Hey Yahavi, Chrome mein hackknow.com khol"
+"Hey Yahavi, Downloads mein saari PDFs dhundh"
+"Hey Yahavi, volume 50 percent kar"
+"Hey Yahavi, ek React login form likh"
+"Hey Yahavi, Hackknow ke new orders check kar"
+"Hey Yahavi, 10 minute baad shutdown kar"
+"Hey Yahavi, latest cybersecurity news search kar"
+```
+
+**Push-to-talk:** `Ctrl+Space`  
+**Text mode:** Type in the dashboard input box
+
+---
+
+## Project Structure
+
+```
+YahavisAI/
+├── main.py                    # Entry point — boot + async loop
+├── yahavis.config.json        # All runtime settings
+├── .env.example               # API keys template
+├── requirements.txt           # All Python dependencies
+│
+├── core/
+│   ├── brain.py               # LLM orchestration + streaming
+│   ├── intent_parser.py       # NLU: voice → structured intent
+│   ├── task_orchestrator.py   # Priority queue + parallel exec
+│   └── api_router.py          # 8-provider rotation + fallback
+│
+├── voice/
+│   ├── listener.py            # Mic input + hotword detection
+│   ├── speaker.py             # edge-tts + pyttsx3 TTS
+│   └── wakeword.py            # Porcupine / energy-based
+│
+├── computer/
+│   ├── mouse_keyboard.py      # pyautogui controls
+│   ├── file_ops.py            # File system operations
+│   ├── app_manager.py         # Open/close/switch apps
+│   ├── browser_control.py     # Playwright browser automation
+│   ├── system_ops.py          # Volume, brightness, screenshot
+│   └── screen_reader.py       # Screenshot + OCR + vision LLM
+│
+├── skills/
+│   ├── hackknow_ops.py        # WooCommerce + site health
+│   ├── web_search.py          # DuckDuckGo free search
+│   ├── code_writer.py         # Generate + save + open code
+│   ├── content_engine.py      # Title → full content package
+│   └── scheduler.py           # Reminders + cron tasks
+│
+├── ui/
+│   ├── index.html             # JARVIS HUD dashboard
+│   ├── style.css              # Neon terminal CSS
+│   ├── app.js                 # Live WebSocket UI
+│   └── server.py              # FastAPI + WebSocket server
+│
+├── memory/
+│   ├── short_term.py          # Session context (rolling)
+│   └── long_term.py           # JSON persistent memory
+│
+└── prompts/
+    ├── system_prompt.txt      # YAHAVIS personality
+    ├── intent_prompts.py      # Per-intent prompt templates
+    └── hackknow_context.txt   # Hackknow platform knowledge
+```
+
+---
+
+## API Key Setup (All Free)
+
+| Provider   | Get Key                          | Limit/Day  |
+|------------|----------------------------------|------------|
+| Groq       | console.groq.com (instant)       | 14,400 req |
+| Gemini     | aistudio.google.com              | 1,500 req  |
+| Porcupine  | picovoice.io (wake word, free)   | Always free|
+| Ollama     | Local — no key needed            | Unlimited  |
+
+---
+
+## Hackknow Integration
+
+Add WooCommerce credentials to `.env`:
+```
+WC_SITE_URL=https://shop.hackknow.com
+WC_CONSUMER_KEY=ck_xxxx
+WC_CONSUMER_SECRET=cs_xxxx
+```
+
+Then say:
+```
+"Hey Yahavi, check orders"
+"Hey Yahavi, add product 'Nmap Script Pack' at 299 rupees"
+"Hey Yahavi, write description for Python Hacking Bundle"
+```
+
+---
+
+## Built By
+**Myth** · Founder, Hackknow  
+Email: ceo.hackknow@gmail.com  
+Site: [hackknow.com](https://hackknow.com)
+
+*YAHAVIS — Free intelligence, infinite capability.*
