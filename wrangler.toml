@@ -1,0 +1,24 @@
+name = "yahavis"
+main = "worker.js"
+compatibility_date = "2024-01-01"
+compatibility_flags = ["nodejs_compat"]
+
+[vars]
+YAHAVIS_VERSION = "1.0.0"
+
+# KV Namespaces — created via: wrangler kv namespace create RATE_KV
+# [[kv_namespaces]]
+# binding = "RATE_KV"
+# id = "REPLACE_WITH_KV_ID"
+
+# [[kv_namespaces]]
+# binding = "STATIC_KV"
+# id = "REPLACE_WITH_STATIC_KV_ID"
+
+[routes]
+# Auto-assigned: yahavis.<account>.workers.dev
+# Custom domain set below after worker is deployed
+
+[[routes]]
+pattern = "yahavis.hackknow.com/*"
+zone_name = "hackknow.com"
