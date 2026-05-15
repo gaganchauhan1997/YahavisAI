@@ -35,6 +35,7 @@ export default {
     if (p === '/api/revenue')     return handleRevenue(env);
     if (p === '/api/site-status') return handleSiteStatus(env);
     if (p === '/api/memory')      return handleMemory(request, env);
+    if (p === '/api/tts')         return handleTTS(request, env);
     return new Response('Not Found', { status: 404, headers: CORS });
   }
 };
@@ -225,6 +226,56 @@ async function handleMemory(request, env) {
   return json({ memory: {} });
 }
 
+
+// ── ElevenLabs TTS (cloned voice) ────────────────────
+async function handleTTS(request, env) {
+  if (request.method !== 'POST') return json({ error: 'POST required' }, 405);
+  const { text } = await request.json().catch(() => ({}));
+  if (!text) return json({ error: 'text required' }, 400);
+
+  const xiKey     = env.ELEVENLABS_API_KEY;
+  const voiceId   = env.ELEVENLABS_VOICE_ID;
+
+  // Fallback: no ElevenLabs key → tell frontend to use browser TTS
+  if (!xiKey || !voiceId) {
+    return json({ fallback: true, reason: 'ElevenLabs not configured' });
+  }
+
+  const clean = text.replace(/[*#`_~\[\]>]/g, '').replace(/\n+/g, ' ').slice(0, 400).trim();
+
+  try {
+    const r = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}/stream`, {
+      method: 'POST',
+      headers: {
+        'xi-api-key': xiKey,
+        'Content-Type': 'application/json',
+        'Accept': 'audio/mpeg',
+      },
+      body: JSON.stringify({
+        text: clean,
+        model_id: 'eleven_multilingual_v2',
+        voice_settings: { stability: 0.45, similarity_boost: 0.88, style: 0.3, use_speaker_boost: true },
+      }),
+    });
+
+    if (!r.ok) {
+      const err = await r.text();
+      console.error('ElevenLabs TTS error:', r.status, err);
+      return json({ fallback: true, reason: `ElevenLabs ${r.status}` });
+    }
+
+    return new Response(r.body, {
+      headers: {
+        ...CORS,
+        'Content-Type': 'audio/mpeg',
+        'Cache-Control': 'no-cache',
+      },
+    });
+  } catch (e) {
+    return json({ fallback: true, reason: String(e) });
+  }
+}
+
 function json(d, s = 200) { return new Response(JSON.stringify(d), { status: s, headers: { ...CORS, 'Content-Type': 'application/json' } }); }
 function getIP(r) { return r.headers.get('CF-Connecting-IP') || r.headers.get('X-Forwarded-For') || 'unknown'; }
 
@@ -235,4 +286,10 @@ function fallbackHTML() {
 <div style="color:#506070">Online · Uploading interface...</div>
 <style>@keyframes p{0%,100%{opacity:1}50%{opacity:.5}}</style>
 </body></html>`;
+}
+
+// ── ElevenLabs TTS Proxy ─────────────────────────────
+// Appended by YAHAVIS deploy — voice clone endpoint
+export async function onRequestPost_tts(request, env) {
+  // handled below
 }
